@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRegister } from "@/hooks/useRegister";
+import { Alert } from "@mui/material";
 // import imgBg from "../../../public/background.png";
 
 const Register = () => {

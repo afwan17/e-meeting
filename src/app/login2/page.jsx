@@ -5,17 +5,28 @@ import Link from "next/link";
 import { useLogin } from "@/hooks/useLogin";
 // import imgBg from "../../../public/background.png";
 
-const Login = () => {
+const Login2 = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const { login, loading, error } = useLogin();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add your login logic here
-    console.log("Login attempt:", { username, password });
+
+    try {
+      const res = await login({
+        username,
+        password,
+      });
+
+      console.log(res, "isi res");
+
+      alert("berhasil login akun");
+    } catch (error) {
+      alert("gagal login");
+    }
   };
 
   return (
@@ -174,4 +185,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Login2;
