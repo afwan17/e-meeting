@@ -17,7 +17,6 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("submit terpanggil");
 
     try {
       await register({
