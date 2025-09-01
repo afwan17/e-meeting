@@ -1,0 +1,28 @@
+.sidebar {
+  width: 60px;
+  background: white;
+  border-right: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.menuItem {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.active {
+  background: orange;
+  color: white;
+}
