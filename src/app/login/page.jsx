@@ -1,21 +1,45 @@
 // pages/login.js
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { Snackbar, Alert, AlertTitle } from "@mui/material";
 import { useLogin } from "@/hooks/useLogin";
+import { useRouter } from "next/navigation";
 // import imgBg from "../../../public/background.png";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [alert, setAlert] = useState(null); // ⬅️ state untuk alert
+  const router = useRouter();
 
   const { login, loading, error } = useLogin();
+  const [open, setOpen] = useState(false);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    if (sessionStorage.getItem("registerSuccess") === "1") {
+      setOpen(true);
+      sessionStorage.removeItem("registerSuccess");
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
+    setAlert(null);
     e.preventDefault();
-    // Add your login logic here
-    console.log("Login attempt:", { username, password });
+    try {
+      const res = await login({ username, password });
+      // setAlert({ type: "success", message: "Login berhasil!" });
+      localStorage.setItem("access_token", res?.data?.access_token);
+      localStorage.setItem("refresh_token", res?.data?.refresh_token);
+      router.push("/reservasi");
+      sessionStorage.setItem("registerSuccess", "1");
+    } catch (error) {
+      setAlert({
+        type: "error",
+        message: error?.response?.data?.message || "Login gagal",
+      });
+    }
   };
 
   return (
@@ -25,8 +49,22 @@ const Login = () => {
         backgroundImage: `url("/background.png")`,
       }}
     >
+      <Snackbar
+        open={open}
+        autoHideDuration={3000}
+        onClose={() => setOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setOpen(false)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          <AlertTitle>Success</AlertTitle>
+          Register berhasil!
+        </Alert>
+      </Snackbar>
       {/* Overlay for better contrast */}
-      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
 
       {/* Login Card - positioned to the left as shown in the image */}
       <div className="relative z-10 flex justify-start items-center min-h-screen px-4 md:px-16">
@@ -67,6 +105,7 @@ const Login = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
                 placeholder="Username"
                 required
+                autoComplete="username"
               />
             </div>
 
@@ -86,6 +125,7 @@ const Login = () => {
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
                   placeholder="Password"
                   required
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -148,6 +188,17 @@ const Login = () => {
                 Forget Password?
               </button>
             </div>
+
+            {alert && (
+              <div className="px-6 pb-2">
+                <Alert severity={alert.type}>
+                  <AlertTitle>
+                    {alert.type === "success" ? "Success" : "Error"}
+                  </AlertTitle>
+                  {alert.message}
+                </Alert>
+              </div>
+            )}
 
             <button
               type="submit"

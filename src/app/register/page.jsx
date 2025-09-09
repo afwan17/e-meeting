@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRegister } from "@/hooks/useRegister";
-import { Alert } from "@mui/material";
-// import imgBg from "../../../public/background.png";
+import { Alert, AlertTitle } from "@mui/material";
+import { useRouter } from "next/navigation";
 
 const Register = () => {
   const [username, setUsername] = useState("");
@@ -13,42 +13,43 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [alert, setAlert] = useState(null);
+  const router = useRouter();
 
   const { register, loading, error } = useRegister();
 
   const handleSubmit = async (e) => {
+    setAlert(null);
     e.preventDefault();
 
     try {
-      await register({
-        email,
-        username,
-        password,
-        confirmPassword,
-      });
-
-      alert("berhasil registrasi akun");
+      await register({ email, username, password, confirmPassword });
+      setAlert({ type: "success", message: "Registrasi berhasil!" });
+      router.push("/login");
+      sessionStorage.setItem("registerSuccess", "1");
     } catch (error) {
-      alert("gagal register");
+      setAlert({
+        type: "error",
+        message: error?.response?.data?.message || "Registrasi gagal",
+      });
     }
   };
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center relative"
+      className="min-h-screen bg-cover bg-center relative "
       style={{
         backgroundImage: `url("/background.png")`,
       }}
     >
       {/* Overlay for better contrast */}
-      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
 
       {/* Login Card - positioned to the left as shown in the image */}
       <div className="relative z-10 flex justify-start items-center min-h-screen px-4 md:px-16">
         <div className="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-3xl">
           {/* Header */}
-          <div className="p-8 text-center">
-            <div className="flex items-center justify-center mb-6">
+          <div className="p-6 text-center">
+            <div className="flex items-center justify-center mb-4">
               <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-lg">E</span>
               </div>
@@ -57,7 +58,7 @@ const Register = () => {
               </span>
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">
               Welcome Back!
             </h1>
             <p className="text-sm text-gray-500">
@@ -66,11 +67,11 @@ const Register = () => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="px-8 pb-8">
-            <div className="mb-6">
+          <form onSubmit={handleSubmit} className="px-6 pb-6">
+            <div className="mb-4">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Email
               </label>
@@ -79,16 +80,17 @@ const Register = () => {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
                 placeholder="Email"
                 required
+                autoComplete="email"
               />
             </div>
 
-            <div className="mb-6">
+            <div className="mb-4">
               <label
                 htmlFor="username"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Username
               </label>
@@ -97,16 +99,17 @@ const Register = () => {
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
                 placeholder="Username"
                 required
+                autoComplete="username"
               />
             </div>
 
-            <div className="mb-6 relative">
+            <div className="mb-4 relative">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Password
               </label>
@@ -116,9 +119,10 @@ const Register = () => {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 py-2.5 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
                   placeholder="Password"
                   required
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -174,22 +178,23 @@ const Register = () => {
             </div>
 
             {/* confirm password */}
-            <div className="mb-6 relative">
+            <div className="mb-5 relative">
               <label
-                htmlFor="conrirm-password"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                htmlFor="confirm-password"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Confirm Password
               </label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
-                  id="password"
+                  id="confirm-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Password"
+                  className="w-full px-3 py-2.5 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                  placeholder="Confirm Password"
                   required
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -246,23 +251,26 @@ const Register = () => {
               </div>
             </div>
 
-            {/* <div className="flex items-center justify-end mb-6">
-              <button
-                type="button"
-                className="text-xs text-gray-500 hover:text-gray-700 transition-colors duration-200"
-              >
-                Forget Password?
-              </button>
-            </div> */}
+            {/* tampilkan alert kalau ada */}
+            {alert && (
+              <div className="px-6 pb-2">
+                <Alert severity={alert.type}>
+                  <AlertTitle>
+                    {alert.type === "success" ? "Success" : "Error"}
+                  </AlertTitle>
+                  {alert.message}
+                </Alert>
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
             >
               Daftar
             </button>
 
-            <div className="mt-6 text-center">
+            <div className="mt-4 text-center">
               <p className="text-sm text-gray-500">
                 have an account?{" "}
                 <Link

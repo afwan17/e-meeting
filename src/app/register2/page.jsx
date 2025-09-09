@@ -1,272 +1,312 @@
-"use client"; // Menggunakan komponen ini sebagai Client Component
-
+// pages/login.js
+"use client";
 import React, { useState } from "react";
-import Image from "next/image";
+import Link from "next/link";
+import { useRegister } from "@/hooks/useRegister";
+import { Alert, AlertTitle } from "@mui/material";
+import { useRouter } from "next/navigation";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-// Pastikan jalur gambar di sini benar, sesuaikan dengan struktur proyek Anda
-// import logo from "./logo.png"; // Ganti dengan path logo E-Meeting Anda
-import background from "../../../public/background.png"; // Ganti dengan path gambar latar belakang
-
-const styles = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
-    width: "100vw",
-    position: "relative",
-    overflow: "hidden",
-  },
-  backgroundImage: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    zIndex: -1,
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    zIndex: 0,
-  },
-  registerCard: {
-    position: "relative",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    padding: "40px",
-    borderRadius: "20px",
-    boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
-    width: "400px",
-    zIndex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    transition: "transform 0.3s ease-in-out",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    marginBottom: "20px",
-  },
-  logo: {
-    backgroundColor: "#ff6600",
-    color: "white",
-    padding: "8px",
-    borderRadius: "50%",
-    marginRight: "10px",
-    fontWeight: "bold",
-    fontSize: "24px",
-  },
-  title: {
-    fontSize: "24px",
-    fontWeight: "bold",
-    color: "#333",
-  },
-  greeting: {
-    textAlign: "center",
-    marginBottom: "20px",
-  },
-  welcomeText: {
-    fontSize: "28px",
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: "5px",
-  },
-  welcomeSubtitle: {
-    fontSize: "14px",
-    color: "#666",
-  },
-  form: {
-    width: "100%",
-  },
-  inputGroup: {
-    marginBottom: "20px",
-  },
-  label: {
-    fontSize: "16px",
-    fontWeight: "bold",
-    color: "#555",
-    marginBottom: "5px",
-    display: "block",
-  },
-  inputWrapper: {
-    position: "relative",
-  },
-  input: {
-    width: "100%",
-    padding: "12px",
-    fontSize: "16px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-    boxSizing: "border-box",
-    paddingRight: "40px", // Ruang untuk ikon
-  },
-  icon: {
-    position: "absolute",
-    right: "10px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    cursor: "pointer",
-    color: "#999",
-  },
-  footer: {
-    marginTop: "20px",
-    textAlign: "center",
-  },
-  footerText: {
-    fontSize: "14px",
-    color: "#666",
-  },
-  footerLink: {
-    fontSize: "14px",
-    color: "#ff6600",
-    textDecoration: "none",
-    marginLeft: "5px",
-    fontWeight: "bold",
-  },
-  registerButton: {
-    width: "100%",
-    padding: "15px",
-    fontSize: "18px",
-    fontWeight: "bold",
-    color: "white",
-    backgroundColor: "#ff6600",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
-    transition: "background-color 0.3s ease",
-  },
-};
-
-const RegisterPage = () => {
+const Register2 = () => {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [alert, setAlert] = useState(null); // ⬅️ state untuk alert
+  const router = useRouter();
 
-  // Fungsi untuk mengubah status tampil/sembunyikan kata sandi
-  const togglePasswordVisibility = (setter) => {
-    setter((prev) => !prev);
+  const { register, loading, error } = useRegister();
+
+  const handleSubmit = async (e) => {
+    setAlert(null);
+    e.preventDefault();
+
+    try {
+      // 🔹 Cek email dulu
+      const emailCheckRes = await fetch(`${baseUrl}/users?email=${email}`);
+      const emailCheck = await emailCheckRes.json().catch(() => []);
+      if (Array.isArray(emailCheck) && emailCheck.length > 0) {
+        setAlert({ type: "error", message: "Email sudah digunakan!" });
+        return;
+      }
+
+      // 🔹 Cek username
+      const usernameCheckRes = await fetch(
+        `${baseUrl}/users?username=${username}`
+      );
+      const usernameCheck = await usernameCheckRes.json().catch(() => []);
+      if (Array.isArray(usernameCheck) && usernameCheck.length > 0) {
+        setAlert({ type: "error", message: "Username sudah digunakan!" });
+        return;
+      }
+
+      await register({ email, username, password, confirmPassword });
+      setAlert({ type: "success", message: "Registrasi berhasil!" });
+      setTimeout(() => {
+        router.push("/login");
+      }, 3000); // kasih delay biar alert sempat tampil
+    } catch (error) {
+      setAlert({
+        type: "error",
+        message: error?.response?.data?.message || "Registrasi gagal",
+      });
+    }
   };
 
   return (
-    <div style={styles.container}>
-      {/* Gambar latar belakang */}
-      <Image
-        src={background}
-        alt="Latar belakang ruang meeting"
-        fill
-        style={styles.backgroundImage}
-        priority
-      />
+    <div
+      className="min-h-screen bg-cover bg-center relative "
+      style={{
+        backgroundImage: `url("/background.png")`,
+      }}
+    >
+      {/* Overlay for better contrast */}
+      {/* <div className="absolute inset-0 bg-black bg-opacity-20"></div> */}
 
-      {/* Overlay untuk membuat form lebih menonjol */}
-      <div style={styles.overlay}></div>
-
-      {/* Kontainer kartu register */}
-      <div style={styles.registerCard}>
-        {/* Header E-Meeting */}
-        <div style={styles.header}>
-          <div style={styles.logo}>E</div>
-          <span style={styles.title}>E-Meeting</span>
-        </div>
-
-        {/* Salam selamat datang */}
-        <div style={styles.greeting}>
-          <h2 style={styles.welcomeText}>Welcome Back!</h2>
-          <p style={styles.welcomeSubtitle}>Create your account here!</p>
-        </div>
-
-        {/* Formulir register */}
-        <form style={styles.form}>
-          <div style={styles.inputGroup}>
-            <label htmlFor="username" style={styles.label}>
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              placeholder="Username"
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.inputGroup}>
-            <label htmlFor="email" style={styles.label}>
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="Email"
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.inputGroup}>
-            <label htmlFor="password" style={styles.label}>
-              Password
-            </label>
-            <div style={styles.inputWrapper}>
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                placeholder="Password"
-                style={styles.input}
-              />
-              <span
-                style={styles.icon}
-                onClick={() => togglePasswordVisibility(setShowPassword)}
-              >
-                {/* Menggunakan emoji sebagai ikon mata terbuka/tertutup */}
-                {showPassword ? "👁️" : "👁️‍🗨️"}
+      {/* Login Card - positioned to the left as shown in the image */}
+      <div className="relative z-10 flex justify-start items-center min-h-screen px-4 md:px-16">
+        <div className="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-3xl">
+          {/* Header */}
+          <div className="p-6 text-center">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-lg">E</span>
+              </div>
+              <span className="ml-3 text-orange-500 font-semibold text-lg">
+                E-Meeting
               </span>
             </div>
+
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">
+              Welcome Back!
+            </h1>
+            <p className="text-sm text-gray-500">
+              Please enter your username and password here!
+            </p>
           </div>
 
-          <div style={styles.inputGroup}>
-            <label htmlFor="confirmPassword" style={styles.label}>
-              Confirm Password
-            </label>
-            <div style={styles.inputWrapper}>
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                style={styles.input}
-              />
-              <span
-                style={styles.icon}
-                onClick={() => togglePasswordVisibility(setShowConfirmPassword)}
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="px-6 pb-6">
+            <div className="mb-4">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {/* Menggunakan emoji sebagai ikon mata terbuka/tertutup */}
-                {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
-              </span>
+                Email
+              </label>
+              <input
+                type="text"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                placeholder="Email"
+                required
+                autoComplete="email"
+              />
             </div>
-          </div>
 
-          <button type="submit" style={styles.registerButton}>
-            Create Account
-          </button>
-        </form>
+            <div className="mb-4">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                placeholder="Username"
+                required
+                autoComplete="username"
+              />
+            </div>
 
-        {/* Tautan untuk login jika sudah memiliki akun */}
-        <div style={styles.footer}>
-          <span style={styles.footerText}>Already have an account?</span>
-          <a href="/login" style={styles.footerLink}>
-            Login
-          </a>
+            <div className="mb-4 relative">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3 py-2.5 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                  placeholder="Password"
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200 p-1"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    // Eye icon (open) for "show password"
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 16.057 2.458 12z"
+                      />
+                    </svg>
+                  ) : (
+                    // Eye-off icon (closed) for "hide password"
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.956 9.956 0 012.293-3.95m2.074-2.073A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.956 9.956 0 01-4.293 5.95M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 3l18 18"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* confirm password */}
+            <div className="mb-5 relative">
+              <label
+                htmlFor="confirm-password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Confirm Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirm-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2.5 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                  placeholder="Confirm Password"
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200 p-1"
+                  aria-label={
+                    showConfirmPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showConfirmPassword ? (
+                    // Eye icon (open) for "show password"
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 16.057 2.458 12z"
+                      />
+                    </svg>
+                  ) : (
+                    // Eye-off icon (closed) for "hide password"
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.956 9.956 0 012.293-3.95m2.074-2.073A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.956 9.956 0 01-4.293 5.95M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 3l18 18"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* tampilkan alert kalau ada */}
+            {alert && (
+              <div className="px-6 pb-2">
+                <Alert severity={alert.type}>
+                  <AlertTitle>
+                    {alert.type === "success" ? "Success" : "Error"}
+                  </AlertTitle>
+                  {alert.message}
+                </Alert>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+            >
+              Daftar
+            </button>
+
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-500">
+                have an account?{" "}
+                <Link
+                  href="/login"
+                  className="text-orange-500 hover:text-orange-600 font-medium transition-colors duration-200"
+                >
+                  Login
+                </Link>
+              </p>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   );
 };
 
-export default RegisterPage;
+export default Register2;
